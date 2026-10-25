@@ -1,46 +1,32 @@
-# charity: water – Water Drop Game Starter
-In this game, users collect as many falling water drops as possible. Users tap to collect drops before they hit the ground. You’ll be working from a partially built version of the game. Some functionality is already provided, and your job is to complete the rest.
+# Water Pipes
 
-## What’s Already Done
+A Pipe Mania-style puzzle game inspired by charity: water. Build a route from the treatment plant to the community tank before pressure is released.
 
-The starter files already include:
+## Play
 
-- A **heading and tagline**
-- A **start button**
-- A **game container** where water drops appear
-- A **placeholder timer and score** (not functional yet)
-- A **logo image** from charity: water
-- Working code that:
-  - Starts the game when the start button is clicked
-  - Makes water drops fall randomly at different sizes
+1. Select **Start pressure**.
+2. Click an empty tile to place the next pipe.
+3. Use **Rotate piece**, the `R` key, or right-click a placed pipe to rotate it.
+4. Connect the plant's `OUT ->` port to the tank's `IN <-` port.
+5. Press **Turn on valve** to start the flow early, or let the countdown expire.
 
-## What You Need to Add
+Replacing a placed pipe costs 2 points. Flowing through pieces earns points, with bonuses for early flow and cross pipes.
 
-Here’s what you're required to implement to bring the game to life:
+## Architecture
 
-### Game Functionality
+- `index.html` contains the semantic game shell and result modal.
+- `styles.css` contains the responsive charity: water-inspired visual system.
+- `game-engine.js` contains framework-free game rules: board configuration, pipe definitions, rotations, piece generation, and flow direction decisions.
+- `script.js` is the browser controller: DOM rendering, input handling, timers, scoring display, and modal state.
 
-- **Update the score**
-  - +1 point for each drop clicked  
+The project uses native ES modules and has no build step or dependency install requirement.
 
-- **Add a 30-second timer**
-  - When the timer reaches 0, the game ends  
+## Run locally
 
-- **Display a message when the game ends**
-  - If the player scores **20 or more points**, show a **winning** message  
-  - If the player scores **less than 20 points**, show a **"try again"** message  
-  - Create one array of possible winning messages and one array of losing messages
-  - Depending on whether the user wins or loses, randomly pick and display a message from the appropriate array
+Serve the project directory with any static server, for example:
 
-### Visual Styling
+```bash
+python3 -m http.server 4173
+```
 
-- **Add charity: water branding**
-  
-  - Use the provided logo  
-  - Use the [charity: water brand guidelines](https://drive.google.com/file/d/1ct4zYRIwHAtxoNQoeaVwWYPdnruSC6sr/view) to stay on-brand with colors and styling
-  - Add styling rules to ensure your game layout adjusts well across different screen sizes
-
-
-These are the minimum requirements, but if you'd like an additional challenge go ahead and give the LevelUps a shot! For example, you can set up logic to make some of the drops "bad" drops that remove points if the user click them, complete with a different color to distinguish them from "good" drops. Have fun and make the game your own!
-
-If you have any questions or need any assistance with your code, reach out to the HelpHub or attend a Drop-In Hour. You got this!!
+Then open `http://localhost:4173`.

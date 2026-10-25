@@ -1,25 +1,143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Drop Game</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="game-wrapper">
-        <h1 class="game-title">Water Drop</h1>
-        <p class="game-tagline">Catch the good drops, avoid the bad ones!</p>
-        <div class="score-panel">
-            <div class="score">Score: <span id="score">0</span></div>
-            <div class="timer">Time: <span id="time">30</span>s</div>
-            <button id="start-btn">Start Game</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Water Pipes | charity: water</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="charity: water home"
+          ><img src="img/cw_logo.png" alt="charity: water"
+        /></a>
+        <div class="game-label">
+          <span class="eyebrow">Community challenge 01</span>
+          <h1>Water Pipes</h1>
         </div>
-        
-        <div id="game-container">
+        <button
+          class="icon-button"
+          id="pause-btn"
+          type="button"
+          aria-label="Pause game"
+          title="Pause game"
+        >
+          ||
+        </button>
+      </header>
+      <section class="game-layout" aria-label="Water Pipes game">
+        <aside class="mission-panel">
+          <div class="mission-copy">
+            <span class="eyebrow">The mission</span>
+            <h2>Make every drop count.</h2>
+            <p>
+              Connect the treatment plant to the community tank before pressure
+              is released.
+            </p>
+          </div>
+          <div class="stats" aria-label="Game stats">
+            <div class="stat">
+              <span>Score</span><strong id="score">000</strong>
+            </div>
+            <div class="stat">
+              <span>Pressure</span
+              ><strong><span id="time">12</span><small>s</small></strong>
+            </div>
+          </div>
+          <div class="legend">
+            <div>
+              <span class="legend-dot source-dot"></span> Treatment plant
+            </div>
+            <div><span class="legend-dot tank-dot"></span> Community tank</div>
+          </div>
+          <button class="primary-button" id="start-btn" type="button">
+            Start pressure <span>-></span></button
+          ><button class="text-button" id="restart-btn" type="button">
+            Restart level
+          </button>
+        </aside>
+        <section class="board-panel">
+          <div class="board-heading">
+            <div>
+              <span class="eyebrow">Live map</span>
+              <h2>Build the route</h2>
+            </div>
+            <div class="status-pill" id="status-pill">
+              <span class="status-light"></span
+              ><span id="status-text">Ready to build</span>
+            </div>
+          </div>
+          <div class="board-wrap">
+            <div
+              id="game-container"
+              class="game-board"
+              role="grid"
+              aria-label="Water pipe grid"
+            ></div>
+          </div>
+          <div class="board-footer">
+            <span id="helper-text"
+              >Tap an empty tile to place the next pipe.</span
+            ><span class="controls-hint"
+              ><b>R</b> rotate selected <span class="hint-divider"></span
+              ><b>Space</b> turn on valve</span
+            >
+          </div>
+        </section>
+        <aside class="queue-panel">
+          <div class="queue-heading">
+            <span class="eyebrow">Your supply</span>
+            <h2>Next pipes</h2>
+          </div>
+          <div class="queue" id="queue" aria-label="Upcoming pipe pieces"></div>
+          <div class="piece-tools">
+            <button class="tool-button" id="rotate-btn" type="button">
+              <span class="rotate-icon">↻</span> Rotate piece</button
+            ><button class="valve-button" id="valve-btn" type="button">
+              Turn on valve <span>-></span>
+            </button>
+          </div>
+          <div class="queue-note">
+            <span class="drop-icon">+</span>
+            <p>
+              Place thoughtfully. Replacing a pipe costs
+              <strong>2 points</strong>.
+            </p>
+          </div>
+        </aside>
+      </section>
+      <footer class="footer-note">
+        Clean water is a human right.
+        <span>Every route starts with a drop.</span>
+      </footer>
+    </main>
+    <div class="modal-backdrop" id="modal" hidden>
+      <div
+        class="result-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="result-title"
+      >
+        <div class="result-mark" id="result-mark">+</div>
+        <span class="eyebrow" id="result-kicker">Route complete</span>
+        <h2 id="result-title">Community supplied!</h2>
+        <p id="result-copy">Safe water made it to the tank.</p>
+        <div class="result-score">
+          Final score <strong id="final-score">000</strong>
         </div>
+        <div class="result-actions">
+          <button class="primary-button" id="next-btn" type="button">
+            Next level <span>-></span></button
+          ><button class="text-button" id="retry-btn" type="button">
+            Try again</button
+          ><button class="text-button" id="close-modal-btn" type="button">
+            Keep exploring
+          </button>
+        </div>
+      </div>
     </div>
-    
-    <script src="script.js"></script>
-</body>
+
+    <script type="module" src="script.js"></script>
+  </body>
 </html>
