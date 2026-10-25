@@ -4,8 +4,12 @@ import {
   DIRECTIONS,
   GAME_CONFIG,
   OPPOSITE,
+  PIPE_TYPES,
   addDifficultyPieces,
   createLevel,
+  createQueue,
+  createRandomPiece,
+  getNextDirection,
   getOpenings,
   validateLevel,
 } from "../game-engine.js";
@@ -104,4 +108,63 @@ test("route dimensions match the configured board", () => {
   assert.equal(level.rows, GAME_CONFIG.rows);
   assert.equal(level.cols, GAME_CONFIG.cols);
   assert.ok(level.route.every((piece) => piece.col > 0 && piece.col < GAME_CONFIG.cols - 1));
+});
+
+test("pipe rotations expose the expected openings", () => {
+  assert.deepEqual(getOpenings({ type: "straight", rotation: 0 }), ["e", "w"]);
+  assert.deepEqual(getOpenings({ type: "straight", rotation: 1 }), ["s", "n"]);
+  assert.deepEqual(getOpenings({ type: "corner", rotation: 0 }), ["n", "e"]);
+  assert.deepEqual(getOpenings({ type: "cross", rotation: 3 }), ["w", "n", "e", "s"]);
+});
+
+test("flow direction respects straight and cross rules", () => {
+  assert.equal(getNextDirection({ type: "straight", rotation: 0 }, "e"), "e");
+  assert.equal(getNextDirection({ type: "straight", rotation: 1 }, "s"), "s");
+  assert.equal(getNextDirection({ type: "cross", rotation: 0 }, "w"), "w");
+});
+
+test("random pieces stay within the supported piece and rotation ranges", () => {
+  const lowest = createRandomPiece(() => 0);
+  const highest = createRandomPiece(() => 0.999999);
+  assert.ok(Object.hasOwn(PIPE_TYPES, lowest.type));
+  assert.ok(Object.hasOwn(PIPE_TYPES, highest.type));
+  assert.equal(lowest.rotation, 0);
+  assert.equal(highest.rotation, 3);
+});
+
+test("queue preserves every required route piece", () => {
+  const level = createLevel(19, 2);
+  const routeCounts = new Map();
+  level.route.forEach((piece) => {
+    const key = `${piece.type}:${piece.rotation}`;
+    routeCounts.set(key, (routeCounts.get(key) ?? 0) + 1);
+  });
+  const queue = createQueue(level, () => 0.25);
+  const queueCounts = new Map();
+  queue.forEach((piece) => {
+    const key = `${piece.type}:${piece.rotation}`;
+    queueCounts.set(key, (queueCounts.get(key) ?? 0) + 1);
+  });
+  routeCounts.forEach((count, key) => {
+    assert.ok((queueCounts.get(key) ?? 0) >= count, `missing route piece ${key}`);
+  });
+});
+
+test("queue creation and difficulty upgrades do not mutate level data", () => {
+  const level = createLevel(23, 2);
+  const originalRoute = JSON.stringify(level.route);
+  createQueue(level, () => 0.75);
+  addDifficultyPieces(level.route, 3);
+  assert.equal(JSON.stringify(level.route), originalRoute);
+});
+
+test("validation rejects a route with a rotated first piece", () => {
+  const level = createLevel(31, 1);
+  const brokenLevel = {
+    ...level,
+    route: level.route.map((piece, index) =>
+      index === 0 ? { ...piece, rotation: piece.rotation + 1 } : { ...piece },
+    ),
+  };
+  assert.equal(validateLevel(brokenLevel), false);
 });
