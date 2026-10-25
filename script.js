@@ -25,6 +25,7 @@ const statusText = document.getElementById("status-text");
 const statusPill = document.getElementById("status-pill");
 const helperText = document.getElementById("helper-text");
 const modal = document.getElementById("modal");
+const pauseButton = document.getElementById("pause-btn");
 let grid;
 let queue;
 let score = 0;
@@ -35,6 +36,11 @@ let flowTimer;
 let flowPosition;
 let flowVisited;
 let guaranteedPiecesRemaining;
+function updatePauseButton(isPaused) {
+  pauseButton.classList.toggle("is-paused", isPaused);
+  pauseButton.setAttribute("aria-label", isPaused ? "Resume game" : "Pause game");
+  pauseButton.setAttribute("title", isPaused ? "Resume game" : "Pause game");
+}
 function nextPiece() {
   const result = createNextPiece(guaranteedPiecesRemaining);
   guaranteedPiecesRemaining = result.remaining;
@@ -53,6 +59,7 @@ function resetGame() {
   flowVisited = new Set();
   modal.hidden = true;
   document.getElementById("start-btn").disabled = false;
+  updatePauseButton(false);
   statusPill.className = "status-pill";
   statusText.textContent = "Ready to build";
   helperText.textContent = "Tap an empty tile to place the next pipe.";
@@ -71,14 +78,20 @@ function renderBoard() {
       cell.setAttribute("role", "gridcell");
       if (row === source.row && col === source.col) {
         cell.classList.add("source-cell");
+        cell.setAttribute("aria-label", "Treatment plant output, pointing right");
         cell.innerHTML =
           '<span class="cell-icon">●</span><span class="tile-label">PLANT <b class="tile-port">OUT -></b></span>';
       } else if (row === destination.row && col === destination.col) {
         cell.classList.add("destination-cell");
+        cell.setAttribute("aria-label", "Community tank input, pointing left");
         cell.innerHTML =
           '<span class="cell-icon">○</span><span class="tile-label">TANK <b class="tile-port">IN <-</b></span>';
       } else if (piece) {
         cell.classList.add("pipe-cell");
+        cell.setAttribute(
+          "aria-label",
+          `Placed ${pipeTypes[piece.type].label.toLowerCase()} pipe. Right-click to rotate.`,
+        );
         cell.innerHTML = `<span class="pipe-glyph ${piece.type}" style="--rotation: ${piece.rotation * 90}deg">${pipeTypes[piece.type].symbol}</span><span class="pipe-label">${pipeTypes[piece.type].label}</span>`;
         if (
           flowPosition &&
@@ -88,6 +101,7 @@ function renderBoard() {
           cell.classList.add("flowing");
       } else {
         cell.classList.add("empty-cell");
+        cell.setAttribute("aria-label", "Empty tile. Place the next pipe here.");
         cell.innerHTML = '<span class="empty-mark">+</span>';
       }
       cell.addEventListener("click", () => handleCellClick(row, col));
@@ -147,6 +161,7 @@ function startGame() {
   if (gameState !== "ready" && gameState !== "paused") return;
   gameState = "building";
   document.getElementById("start-btn").disabled = true;
+  updatePauseButton(false);
   statusPill.className = "status-pill active";
   statusText.textContent = "Pressure building";
   helperText.textContent = `The valve opens in ${timeLeft} seconds. Finish your route.`;
@@ -248,12 +263,13 @@ document.getElementById("next-btn").addEventListener("click", resetGame);
 document.getElementById("close-modal-btn").addEventListener("click", () => {
   modal.hidden = true;
 });
-document.getElementById("pause-btn").addEventListener("click", () => {
+pauseButton.addEventListener("click", () => {
   if (gameState === "building") {
     gameState = "paused";
     clearInterval(timerId);
+    updatePauseButton(true);
     statusText.textContent = "Paused";
-    helperText.textContent = "Paused. Press Start pressure to continue.";
+    helperText.textContent = "Paused. Press the resume button to continue.";
   } else if (gameState === "paused") startGame();
 });
 document.addEventListener("keydown", (event) => {
