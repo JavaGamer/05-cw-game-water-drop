@@ -3,19 +3,17 @@ import {
   GAME_CONFIG,
   OPPOSITE as opposite,
   PIPE_TYPES as pipeTypes,
-  createNextPiece,
+  createLevel,
+  createQueue,
+  createRandomPiece,
   getNextDirection,
   getOpenings,
+  validateLevel,
 } from "./game-engine.js";
 
 const {
-  cols: COLS,
   countdownSeconds,
-  destination,
-  guaranteedPieces,
   queueSize,
-  rows: ROWS,
-  source,
 } = GAME_CONFIG;
 const board = document.getElementById("game-container");
 const queueElement = document.getElementById("queue");
@@ -35,29 +33,69 @@ let timerId;
 let flowTimer;
 let flowPosition;
 let flowVisited;
-let guaranteedPiecesRemaining;
+let level;
+let levelNumber = 1;
+let source;
+let destination;
+let availablePieces;
 function updatePauseButton(isPaused) {
   pauseButton.classList.toggle("is-paused", isPaused);
   pauseButton.setAttribute("aria-label", isPaused ? "Resume game" : "Pause game");
   pauseButton.setAttribute("title", isPaused ? "Resume game" : "Pause game");
 }
 function nextPiece() {
-  const result = createNextPiece(guaranteedPiecesRemaining);
-  guaranteedPiecesRemaining = result.remaining;
-  return result.piece;
+  return availablePieces.shift() || createRandomPiece();
+}
+function generatePlayableLevel() {
+  const baseSeed = Date.now() + levelNumber * 1000;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      const candidate = createLevel(baseSeed + attempt, levelNumber);
+      if (validateLevel(candidate)) return candidate;
+    } catch (error) {
+      console.warn("Level generation attempt failed", error);
+    }
+  }
+  return null;
+}
+function showLevelGenerationError() {
+  gameState = "generation-error";
+  document.getElementById("start-btn").disabled = true;
+  statusPill.className = "status-pill lost-status";
+  statusText.textContent = "Level unavailable";
+  helperText.textContent = "Try restarting to generate a fresh route.";
+  document.getElementById("result-mark").textContent = "!";
+  document.getElementById("result-kicker").textContent = "Route setup failed";
+  document.getElementById("result-title").textContent = "Level unavailable";
+  document.getElementById("result-copy").textContent =
+    "We could not prepare a safe route. Restart to try again.";
+  document.getElementById("next-btn").hidden = true;
+  modal.hidden = false;
 }
 function resetGame() {
   clearInterval(timerId);
   clearTimeout(flowTimer);
-  grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-  guaranteedPiecesRemaining = guaranteedPieces;
-  queue = Array.from({ length: queueSize }, nextPiece);
+  const nextLevel = generatePlayableLevel();
+  if (!nextLevel) {
+    showLevelGenerationError();
+    return;
+  }
+  level = nextLevel;
+  source = level.source;
+  destination = level.destination;
+  availablePieces = createQueue(level);
+  queue = availablePieces.splice(0, queueSize);
+  grid = Array.from({ length: level.rows }, () => Array(level.cols).fill(null));
+  board.style.setProperty("--board-columns", level.cols);
+  board.style.setProperty("--board-rows", level.rows);
   score = 0;
-  timeLeft = countdownSeconds;
+  timeLeft = level.timeLimit || countdownSeconds;
   gameState = "ready";
   flowPosition = null;
   flowVisited = new Set();
   modal.hidden = true;
+  document.getElementById("level-label").textContent =
+    `Community challenge ${String(levelNumber).padStart(2, "0")}`;
   document.getElementById("start-btn").disabled = false;
   updatePauseButton(false);
   statusPill.className = "status-pill";
@@ -69,8 +107,8 @@ function resetGame() {
 }
 function renderBoard() {
   board.innerHTML = "";
-  for (let row = 0; row < ROWS; row += 1)
-    for (let col = 0; col < COLS; col += 1) {
+  for (let row = 0; row < level.rows; row += 1)
+    for (let col = 0; col < level.cols; col += 1) {
       const cell = document.createElement("button");
       const piece = grid[row][col];
       cell.className = "board-cell";
@@ -177,7 +215,8 @@ function startGame() {
 }
 function beginFlow() {
   if (gameState === "flowing") return;
-  score += timeLeft * 2;
+  score += Math.max(0, timeLeft) * 2;
+  timeLeft = 0;
   clearInterval(timerId);
   gameState = "flowing";
   statusPill.className = "status-pill flowing-status";
@@ -188,7 +227,7 @@ function beginFlow() {
   flowVisited = new Set([`${source.row},${source.col}`]);
   updateStats();
   renderBoard();
-  flowTimer = setTimeout(() => advanceFlow("e"), 450);
+  flowTimer = setTimeout(() => advanceFlow(source.direction), 450);
 }
 function advanceFlow(direction) {
   if (gameState !== "flowing") return;
@@ -206,7 +245,10 @@ function advanceFlow(direction) {
     return;
   }
   const piece =
-    next.row >= 0 && next.row < ROWS && next.col >= 0 && next.col < COLS
+    next.row >= 0 &&
+    next.row < level.rows &&
+    next.col >= 0 &&
+    next.col < level.cols
       ? grid[next.row][next.col]
       : null;
   if (!piece || !getOpenings(piece).includes(opposite[direction])) {
@@ -259,7 +301,10 @@ document
   .addEventListener("click", rotateCurrentPiece);
 document.getElementById("restart-btn").addEventListener("click", resetGame);
 document.getElementById("retry-btn").addEventListener("click", resetGame);
-document.getElementById("next-btn").addEventListener("click", resetGame);
+document.getElementById("next-btn").addEventListener("click", () => {
+  levelNumber += 1;
+  resetGame();
+});
 document.getElementById("close-modal-btn").addEventListener("click", () => {
   modal.hidden = true;
 });

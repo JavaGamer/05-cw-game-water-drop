@@ -1,6 +1,6 @@
 # Water Pipes
 
-A Pipe Mania-style puzzle game inspired by charity: water. Build a route from the treatment plant to the community tank before pressure is released.
+A Pipe Mania-style puzzle game inspired by charity: water. Build a route from a generated treatment plant position to the community tank before pressure is released.
 
 ## Play
 
@@ -16,10 +16,12 @@ Replacing a placed pipe costs 2 points. Flowing through pieces earns points, wit
 
 - `index.html` contains the semantic game shell and result modal.
 - `styles.css` contains the responsive charity: water-inspired visual system.
-- `game-engine.js` contains framework-free game rules: board configuration, pipe definitions, rotations, piece generation, and flow direction decisions.
+- `game-engine.js` contains framework-free game rules: board configuration, generated level routes, pipe definitions, rotations, solution-aware queues, and flow direction decisions.
 - `script.js` is the browser controller: DOM rendering, input handling, timers, scoring display, and modal state.
 
 The project uses native ES modules and has no build step or dependency install requirement.
+
+Each new level uses an 8x8 board and generates a validated route with multiple turns. The queue contains every required route piece plus distractors, so the level remains solvable while no longer being a fixed straight line.
 
 ## Run locally
 

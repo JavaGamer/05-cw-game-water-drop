@@ -281,9 +281,10 @@ h2 {
 }
 .game-board {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(var(--board-columns, 9), 1fr);
+  grid-template-rows: repeat(var(--board-rows, 7), 1fr);
   gap: 4px;
-  aspect-ratio: 9/7;
+  aspect-ratio: var(--board-columns, 9) / var(--board-rows, 7);
   background: rgba(255, 255, 255, 0.4);
 }
 .board-cell {
