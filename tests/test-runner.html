@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Engine Test Suite | Water Pipes</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+        background: #f7f5ee;
+        color: #1a1a1a;
+        padding: 30px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        border-bottom: 2px solid #ffc907;
+        padding-bottom: 10px;
+      }
+      .test-case {
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        background: #fff;
+        border: 1px solid #d9d5ca;
+        display: flex;
+        justify-content: space-between;
+      }
+      .pass {
+        border-left: 5px solid #159a48;
+      }
+      .fail {
+        border-left: 5px solid #f5402c;
+        background: #ffebeb;
+      }
+      .status {
+        font-weight: bold;
+      }
+      .summary {
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Water Pipes Engine Tests</h1>
+    <div id="results">Running tests...</div>
+    <div id="summary" class="summary"></div>
+
+    <script type="module">
+      import {
+        DIRECTIONS,
+        DIFFICULTY_CONFIG,
+        GAME_CONFIG,
+        OPPOSITE,
+        PIPE_TYPES,
+        addDifficultyPieces,
+        createLevel,
+        createQueue,
+        createRandomPiece,
+        getNextDirection,
+        getOpenings,
+        validateLevel,
+      } from "../game-engine.js";
+
+      const results = document.getElementById("results");
+      const summary = document.getElementById("summary");
+      results.innerHTML = "";
+
+      let passed = 0;
+      let failed = 0;
+
+      function assert(condition, message = "Assertion failed") {
+        if (!condition) throw new Error(message);
+      }
+
+      function assertEqual(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(`${message || "Values differ"}: expected ${expected}, got ${actual}`);
+        }
+      }
+
+      function runTest(name, fn) {
+        const item = document.createElement("div");
+        item.className = "test-case";
+        try {
+          fn();
+          item.classList.add("pass");
+          item.innerHTML = `<span>✔ ${name}</span><span class="status" style="color: #159a48">PASS</span>`;
+          passed += 1;
+        } catch (error) {
+          item.classList.add("fail");
+          item.innerHTML = `<span>✖ ${name} - ${error.message}</span><span class="status" style="color: #f5402c">FAIL</span>`;
+          console.error(error);
+          failed += 1;
+        }
+        results.appendChild(item);
+      }
+
+      // 1. Basic Invariants Test
+      runTest("Basic level dimensions and source/destination match configuration", () => {
+        const level = createLevel(42, 1);
+        assertEqual(level.rows, GAME_CONFIG.rows);
+        assertEqual(level.cols, GAME_CONFIG.cols);
+        assertEqual(level.source.col, 0);
+        assertEqual(level.destination.col, level.cols - 1);
+        assert(validateLevel(level), "Generated level should validate");
+      });
+
+      // 2. Multi-seed Validation
+      runTest("Generated levels validate across seeds 1..50 and difficulties 1..4", () => {
+        for (let difficulty = 1; difficulty <= 4; difficulty += 1) {
+          for (let seed = 1; seed <= 50; seed += 1) {
+            const level = createLevel(seed, difficulty);
+            assert(validateLevel(level), `Failed seed ${seed} at diff ${difficulty}`);
+          }
+        }
+      });
+
+      // 3. Jerry Cans and Obstacles never overlap with the route
+      runTest("Obstacles and Jerry Cans never intersect with the solution route", () => {
+        for (let seed = 100; seed <= 130; seed += 1) {
+          const level = createLevel(seed, 2);
+          const routeKeys = new Set(level.route.map(p => `${p.row},${p.col}`));
+          routeKeys.add(`${level.source.row},${level.source.col}`);
+          routeKeys.add(`${level.destination.row},${level.destination.col}`);
+
+          (level.obstacles || []).forEach(obs => {
+            assert(!routeKeys.has(`${obs.row},${obs.col}`), `Obstacle overlaps route at ${obs.row},${obs.col}`);
+          });
+
+          (level.jerryCans || []).forEach(can => {
+            assert(!routeKeys.has(`${can.row},${can.col}`), `Jerry can overlaps route at ${can.row},${can.col}`);
+          });
+        }
+      });
+
+      // 4. Pipe Openings & Rotations
+      runTest("Pipe openings and rotations behave properly", () => {
+        assertEqual(getOpenings({ type: "straight", rotation: 0 }).join(","), "e,w");
+        assertEqual(getOpenings({ type: "straight", rotation: 1 }).join(","), "s,n");
+        assertEqual(getOpenings({ type: "corner", rotation: 0 }).join(","), "n,e");
+        assertEqual(getOpenings({ type: "filter", rotation: 0 }).join(","), "e,w");
+        assertEqual(getOpenings({ type: "reservoir", rotation: 0 }).join(","), "e,w");
+      });
+
+      // 5. Flow Directions
+      runTest("Flow directions correctly handle straight, cross, and special pipes", () => {
+        assertEqual(getNextDirection({ type: "straight", rotation: 0 }, "e"), "e");
+        assertEqual(getNextDirection({ type: "cross", rotation: 0 }, "w"), "w");
+        assertEqual(getNextDirection({ type: "filter", rotation: 0 }, "e"), "e");
+        assertEqual(getNextDirection({ type: "reservoir", rotation: 0 }, "e"), "e");
+      });
+
+      // 6. Queue preserves route pieces
+      runTest("Queue preserves every required route piece", () => {
+        const level = createLevel(19, 2);
+        const routeCounts = new Map();
+        level.route.forEach((piece) => {
+          const key = `${piece.type}:${piece.rotation}`;
+          routeCounts.set(key, (routeCounts.get(key) ?? 0) + 1);
+        });
+        const queue = createQueue(level, () => 0.25);
+        const queueCounts = new Map();
+        queue.forEach((piece) => {
+          const key = `${piece.type}:${piece.rotation}`;
+          queueCounts.set(key, (queueCounts.get(key) ?? 0) + 1);
+        });
+        routeCounts.forEach((count, key) => {
+          assert((queueCounts.get(key) ?? 0) >= count, `missing route piece ${key}`);
+        });
+      });
+
+      // 7. Difficulty configuration profiles
+      runTest("DIFFICULTY_CONFIG defines easy, normal, and hard profiles", () => {
+        assert(DIFFICULTY_CONFIG.easy, "Easy mode missing");
+        assert(DIFFICULTY_CONFIG.normal, "Normal mode missing");
+        assert(DIFFICULTY_CONFIG.hard, "Hard mode missing");
+        assert(DIFFICULTY_CONFIG.easy.countdownSeconds > DIFFICULTY_CONFIG.hard.countdownSeconds, "Easy timer should be longer than Hard");
+        assert(DIFFICULTY_CONFIG.easy.flowDelay > DIFFICULTY_CONFIG.hard.flowDelay, "Easy flow should be slower than Hard");
+        assert(DIFFICULTY_CONFIG.hard.discardPenalty > DIFFICULTY_CONFIG.easy.discardPenalty, "Hard discard penalty should be stricter");
+      });
+
+      // 8. Difficulty level generation
+      runTest("createLevel supports difficulty modes and scales constraints properly", () => {
+        const easyLevel = createLevel(77, 1, "easy");
+        const hardLevel = createLevel(77, 1, "hard");
+        assert(validateLevel(easyLevel), "Easy level should validate");
+        assert(validateLevel(hardLevel), "Hard level should validate");
+        assert(easyLevel.timeLimit > hardLevel.timeLimit, "Easy level should grant more time");
+        assert(easyLevel.obstacles.length <= hardLevel.obstacles.length, "Easy level should have fewer or equal obstacles");
+        assertEqual(easyLevel.mode, "easy");
+        assertEqual(hardLevel.mode, "hard");
+      });
+
+      summary.textContent = `Completed: ${passed} passed, ${failed} failed.`;
+      summary.style.color = failed === 0 ? "#159a48" : "#f5402c";
+    </script>
+  </body>
+</html>

@@ -9,22 +9,38 @@
   <body>
     <main class="game-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="charity: water home"
+        <a
+          class="brand"
+          href="https://www.charitywater.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="charity: water official website"
           ><img src="img/cw_logo.png" alt="charity: water"
         /></a>
         <div class="game-label">
           <span class="eyebrow" id="level-label">Community challenge 01</span>
           <h1>Water Pipes</h1>
         </div>
-        <button
-          class="icon-button"
-          id="pause-btn"
-          type="button"
-          aria-label="Pause game"
-          title="Pause game"
-        >
-          <span class="pause-icon" aria-hidden="true"></span>
-        </button>
+        <div class="topbar-actions">
+          <button
+            class="icon-button"
+            id="mute-btn"
+            type="button"
+            aria-label="Toggle sound"
+            title="Toggle sound"
+          >
+            <span class="sound-icon" id="sound-icon" aria-hidden="true">🔊</span>
+          </button>
+          <button
+            class="icon-button"
+            id="pause-btn"
+            type="button"
+            aria-label="Pause game"
+            title="Pause game"
+          >
+            <span class="pause-icon" aria-hidden="true"></span>
+          </button>
+        </div>
       </header>
       <section class="game-layout" aria-label="Water Pipes game">
         <aside class="mission-panel">
@@ -32,17 +48,36 @@
             <span class="eyebrow">The mission</span>
             <h2>Make every drop count.</h2>
             <p>
-              Connect the treatment plant to the community tank before pressure
-              is released.
+              Turn on the valve, then connect the treatment plant to the
+              community tank before pressure is released. You can keep placing
+              pipes even while water is flowing!
             </p>
+          </div>
+          <div class="difficulty-control" aria-label="Game difficulty selection">
+            <div class="difficulty-heading">
+              <span class="eyebrow">Difficulty mode</span>
+            </div>
+            <div class="difficulty-options" role="radiogroup" aria-label="Difficulty modes">
+              <button class="diff-btn" data-mode="easy" role="radio" aria-checked="false" type="button">Easy</button>
+              <button class="diff-btn is-active" data-mode="normal" role="radio" aria-checked="true" type="button">Normal</button>
+              <button class="diff-btn" data-mode="hard" role="radio" aria-checked="false" type="button">Hard</button>
+            </div>
+            <p class="difficulty-hint" id="difficulty-hint">Standard 14s pressure with balanced route challenges.</p>
           </div>
           <div class="stats" aria-label="Game stats">
             <div class="stat">
               <span>Score</span><strong id="score">000</strong>
             </div>
             <div class="stat">
-              <span>Pressure</span
-              ><strong><span id="time">12</span><small>s</small></strong>
+              <span>Best</span><strong id="best-score">000</strong>
+            </div>
+            <div class="stat">
+              <span>Pressure</span><strong
+                ><span id="time">12</span><small>s</small></strong
+              >
+            </div>
+            <div class="stat">
+              <span>Jerry Cans</span><strong id="jerry-cans-count">0</strong>
             </div>
           </div>
           <div class="legend">
@@ -50,22 +85,39 @@
               <span class="legend-dot source-dot"></span> Treatment plant
             </div>
             <div><span class="legend-dot tank-dot"></span> Community tank</div>
+            <div>
+              <span class="legend-icon jerry-can-legend-icon"
+                ><img src="img/water-can-transparent.png" alt=""
+              /></span>
+              Jerry can (+50)
+            </div>
+            <div>
+              <span class="legend-icon rock-legend-icon">▲</span> Bedrock obstacle
+            </div>
           </div>
-          <button class="primary-button" id="start-btn" type="button">
-            Start pressure <span>-></span></button
-          ><button class="text-button" id="restart-btn" type="button">
-            Restart level
+          <button class="restart-main-btn" id="restart-btn" type="button">
+            ↻ Restart level
           </button>
         </aside>
         <section class="board-panel">
           <div class="board-heading">
-            <div>
+            <div class="board-title-group">
               <span class="eyebrow">Live map</span>
               <h2>Build the route</h2>
             </div>
-            <div class="status-pill" id="status-pill">
-              <span class="status-light"></span
-              ><span id="status-text">Ready to build</span>
+            <div class="board-top-controls">
+              <div class="status-pill" id="status-pill">
+                <span class="status-light"></span
+                ><span id="status-text">Valve closed</span>
+              </div>
+              <button
+                class="primary-button board-start-btn"
+                id="valve-btn"
+                type="button"
+                title="Turn on valve to start timer (Space)"
+              >
+                Turn on valve to start <span>-></span>
+              </button>
             </div>
           </div>
           <div class="board-wrap">
@@ -78,14 +130,33 @@
           </div>
           <div class="board-footer">
             <span id="helper-text"
-              >Tap an empty tile to place the next pipe.</span
+              >Turn on the valve to start pressure and begin placing pipes.</span
             ><span class="controls-hint"
-              ><b>R</b> rotate selected <span class="hint-divider"></span
-              ><b>Space</b> turn on valve</span
+              ><b>Space</b> valve <span class="hint-divider"></span
+              ><b>R</b> rotate <span class="hint-divider"></span
+              ><b>H</b> hold <span class="hint-divider"></span
+              ><b>D</b> discard</span
             >
           </div>
         </section>
         <aside class="queue-panel">
+          <div class="hold-section">
+            <div class="hold-heading">
+              <span class="eyebrow">Hold slot</span>
+              <span class="key-badge">H</span>
+            </div>
+            <button
+              class="hold-card"
+              id="hold-btn"
+              type="button"
+              aria-label="Hold or swap piece"
+              title="Click or press H to hold current piece"
+            >
+              <div id="hold-content" class="hold-content">
+                <span class="hold-empty-hint">Press <b>H</b> to hold</span>
+              </div>
+            </button>
+          </div>
           <div class="queue-heading">
             <span class="eyebrow">Your supply</span>
             <h2>Next pipes</h2>
@@ -93,9 +164,15 @@
           <div class="queue" id="queue" aria-label="Upcoming pipe pieces"></div>
           <div class="piece-tools">
             <button class="tool-button" id="rotate-btn" type="button">
-              <span class="rotate-icon">↻</span> Rotate piece</button
-            ><button class="valve-button" id="valve-btn" type="button">
-              Turn on valve <span>-></span>
+              <span class="rotate-icon">↻</span> Rotate piece
+            </button>
+            <button
+              class="tool-button tool-discard"
+              id="discard-btn"
+              type="button"
+              title="Discard current piece (-5 pts)"
+            >
+              <span class="discard-icon">✕</span> Discard (-5)
             </button>
           </div>
           <div class="queue-note">
@@ -107,9 +184,34 @@
           </div>
         </aside>
       </section>
-      <footer class="footer-note">
-        Clean water is a human right.
-        <span>Every route starts with a drop.</span>
+      <footer class="footer-note campaign-footer" role="contentinfo">
+        <div class="footer-mission">
+          <div class="footer-tagline">
+            <span class="footer-tagline-dot"></span>
+            <strong>Clean water changes everything.</strong>
+          </div>
+          <p class="footer-subtext">
+            100% of public donations fund clean and safe water projects around the world.
+          </p>
+        </div>
+        <div class="footer-links">
+          <a
+            class="footer-link-pill"
+            href="https://www.charitywater.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            About charity: water <span class="external-arrow" aria-hidden="true">↗</span>
+          </a>
+          <a
+            class="footer-link-pill donate-pill"
+            href="https://www.charitywater.org/donate"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Donate to clean water <span class="external-arrow" aria-hidden="true">↗</span>
+          </a>
+        </div>
       </footer>
     </main>
     <div class="modal-backdrop" id="modal" hidden>
@@ -123,8 +225,27 @@
         <span class="eyebrow" id="result-kicker">Route complete</span>
         <h2 id="result-title">Community supplied!</h2>
         <p id="result-copy">Safe water made it to the tank.</p>
+
+        <div class="result-breakdown" id="result-breakdown">
+          <div class="breakdown-item">
+            <span>Route pipes:</span> <strong id="bd-route">+0</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Jerry cans bonus:</span> <strong id="bd-cans">+0</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Special fixtures:</span> <strong id="bd-special">+0</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Early valve bonus:</span> <strong id="bd-time">+0</strong>
+          </div>
+        </div>
+
         <div class="result-score">
           Final score <strong id="final-score">000</strong>
+          <span class="new-best-badge" id="new-best-badge" hidden
+            >★ NEW BEST!</span
+          >
         </div>
         <div class="result-actions">
           <button class="primary-button" id="next-btn" type="button">

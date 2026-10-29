@@ -5,6 +5,45 @@ export const GAME_CONFIG = Object.freeze({
   countdownSeconds: 12,
 });
 
+export const DIFFICULTY_CONFIG = Object.freeze({
+  easy: Object.freeze({
+    id: "easy",
+    label: "Easy",
+    countdownSeconds: 20,
+    flowDelay: 1500,
+    minObstacles: 0,
+    maxObstacles: 1,
+    discardPenalty: 2,
+    replacePenalty: 1,
+    jerryCanBonus: 50,
+    description: "Relaxed 20s pressure, fewer obstacles, and gentle penalties.",
+  }),
+  normal: Object.freeze({
+    id: "normal",
+    label: "Normal",
+    countdownSeconds: 14,
+    flowDelay: 1100,
+    minObstacles: 2,
+    maxObstacles: 4,
+    discardPenalty: 5,
+    replacePenalty: 2,
+    jerryCanBonus: 50,
+    description: "Standard 14s pressure with balanced route challenges.",
+  }),
+  hard: Object.freeze({
+    id: "hard",
+    label: "Hard",
+    countdownSeconds: 8,
+    flowDelay: 750,
+    minObstacles: 3,
+    maxObstacles: 5,
+    discardPenalty: 10,
+    replacePenalty: 4,
+    jerryCanBonus: 75,
+    description: "Intense 8s pressure, rapid water flow, and tight obstacles.",
+  }),
+});
+
 export const DIRECTIONS = Object.freeze({
   n: Object.freeze({ row: -1, col: 0 }),
   e: Object.freeze({ row: 0, col: 1 }),
@@ -35,6 +74,18 @@ export const PIPE_TYPES = Object.freeze({
     label: "Cross",
     openings: Object.freeze(["n", "e", "s", "w"]),
     symbol: "+",
+  }),
+  filter: Object.freeze({
+    label: "Filter",
+    openings: Object.freeze(["e", "w"]),
+    symbol: "Φ",
+    special: "filter",
+  }),
+  reservoir: Object.freeze({
+    label: "Reservoir",
+    openings: Object.freeze(["e", "w"]),
+    symbol: "▣",
+    special: "reservoir",
   }),
 });
 
@@ -147,6 +198,9 @@ function findRoute(
 function findPieceForOpenings(openings) {
   const normalizedOpenings = [...openings].sort().join(",");
   for (const [type, definition] of Object.entries(PIPE_TYPES)) {
+    // Only use standard base pipe types for generated guaranteed routes
+    if (type === "filter" || type === "reservoir") continue;
+
     for (let rotation = 0; rotation < 4; rotation += 1) {
       const rotated = definition.openings.map(
         (opening) => DIRECTION_ORDER[(DIRECTION_ORDER.indexOf(opening) + rotation) % 4],
@@ -189,9 +243,26 @@ export function addDifficultyPieces(pieces, difficulty) {
   return enhancedPieces;
 }
 
-export function createLevel(seed = Date.now(), difficulty = 1) {
+export function createLevel(seed = Date.now(), difficulty = 1, mode = "normal") {
+  let modeKey = "normal";
+  let numericDifficulty = 1;
+
+  if (typeof difficulty === "string" && DIFFICULTY_CONFIG[difficulty]) {
+    modeKey = difficulty;
+    numericDifficulty = typeof mode === "number" ? mode : 1;
+  } else {
+    numericDifficulty = typeof difficulty === "number" ? difficulty : 1;
+    if (typeof mode === "string" && DIFFICULTY_CONFIG[mode]) {
+      modeKey = mode;
+    }
+  }
+
+  const modeConfig = DIFFICULTY_CONFIG[modeKey] || DIFFICULTY_CONFIG.normal;
   const random = createSeededRandom(seed);
-  const minimumTurns = Math.min(1 + difficulty, 3);
+  const minimumTurns = modeKey === "easy"
+    ? Math.min(1 + Math.floor(numericDifficulty / 2), 2)
+    : Math.min(1 + numericDifficulty, 3);
+  const allowOverlap = numericDifficulty >= 2 || modeKey === "hard";
   const source = { row: Math.floor(random() * GAME_CONFIG.rows), col: 0, direction: "e" };
   const destination = {
     row: Math.floor(random() * GAME_CONFIG.rows),
@@ -205,20 +276,63 @@ export function createLevel(seed = Date.now(), difficulty = 1) {
       destination,
       random,
       minimumTurns,
-      difficulty >= 2,
+      allowOverlap,
       GAME_CONFIG.rows,
       GAME_CONFIG.cols,
     );
     if (route) {
+      const routePieces = createRoutePieces(
+        route,
+        source,
+        destination,
+        allowOverlap ? Math.max(2, numericDifficulty) : numericDifficulty,
+      );
+      const routeKeySet = new Set(routePieces.map((p) => getPositionKey(p)));
+      routeKeySet.add(getPositionKey(source));
+      routeKeySet.add(getPositionKey(destination));
+
+      // Collect available empty cells that are NOT part of the solution route
+      const emptyCells = [];
+      for (let r = 0; r < GAME_CONFIG.rows; r += 1) {
+        for (let c = 1; c < GAME_CONFIG.cols - 1; c += 1) {
+          const key = `${r},${c}`;
+          if (!routeKeySet.has(key)) {
+            emptyCells.push({ row: r, col: c });
+          }
+        }
+      }
+      shuffle(emptyCells, random);
+
+      // Place 1 or 2 Jerry Cans for bonus points
+      const jerryCanCount = Math.min(2, Math.max(1, Math.floor(emptyCells.length / 12)));
+      const jerryCans = emptyCells.splice(0, jerryCanCount);
+
+      // Place Obstacles (boulders) from remaining empty cells according to difficulty mode
+      const obstacleCount = Math.min(
+        modeConfig.minObstacles + Math.floor(numericDifficulty / 2),
+        modeConfig.maxObstacles,
+        emptyCells.length,
+      );
+      const obstacles = emptyCells.splice(0, obstacleCount);
+
+      const timeLimit = Math.max(
+        6,
+        modeConfig.countdownSeconds - Math.max(0, numericDifficulty - 1),
+      );
+
       return {
         seed,
         rows: GAME_CONFIG.rows,
         cols: GAME_CONFIG.cols,
         source,
         destination,
-        difficulty,
-        timeLimit: Math.max(8, GAME_CONFIG.countdownSeconds - difficulty + 1),
-        route: createRoutePieces(route, source, destination, difficulty),
+        difficulty: numericDifficulty,
+        mode: modeKey,
+        modeConfig,
+        timeLimit,
+        route: routePieces,
+        jerryCans,
+        obstacles,
       };
     }
   }
@@ -235,7 +349,21 @@ export function createRandomPiece(random = Math.random) {
 
 export function createQueue(level, random = Math.random) {
   const routePieces = level.route.map(({ type, rotation }) => ({ type, rotation }));
-  const distractors = routePieces.slice(0, Math.max(2, Math.floor(routePieces.length / 3))).map(() => createRandomPiece(random));
+  const distractorCount = Math.max(2, Math.floor(routePieces.length / 3));
+  const distractors = [];
+
+  const hasSpecials = level.difficulty >= 2 || level.mode === "hard";
+  for (let i = 0; i < distractorCount; i += 1) {
+    const roll = random();
+    if (hasSpecials && roll < 0.15) {
+      distractors.push({ type: "filter", rotation: Math.floor(random() * 2) });
+    } else if (hasSpecials && roll < 0.3) {
+      distractors.push({ type: "reservoir", rotation: Math.floor(random() * 2) });
+    } else {
+      distractors.push(createRandomPiece(random));
+    }
+  }
+
   const pieces = [...routePieces, ...distractors];
   return shuffle(pieces, random);
 }

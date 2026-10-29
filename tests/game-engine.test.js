@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   DIRECTIONS,
+  DIFFICULTY_CONFIG,
   GAME_CONFIG,
   OPPOSITE,
   PIPE_TYPES,
@@ -68,6 +69,19 @@ function assertRouteInvariants(level) {
     },
   );
   assert.equal(OPPOSITE[level.destination.direction], "e");
+
+  // Verify obstacles and jerry cans do not intersect the route
+  const allRouteKeys = new Set(level.route.map((p) => `${p.row},${p.col}`));
+  allRouteKeys.add(`${level.source.row},${level.source.col}`);
+  allRouteKeys.add(`${level.destination.row},${level.destination.col}`);
+
+  (level.obstacles || []).forEach((obs) => {
+    assert.equal(allRouteKeys.has(`${obs.row},${obs.col}`), false, "obstacle overlaps route");
+  });
+
+  (level.jerryCans || []).forEach((can) => {
+    assert.equal(allRouteKeys.has(`${can.row},${can.col}`), false, "jerry can overlaps route");
+  });
 }
 
 test("generated levels validate across seeds and difficulties", () => {
@@ -115,12 +129,16 @@ test("pipe rotations expose the expected openings", () => {
   assert.deepEqual(getOpenings({ type: "straight", rotation: 1 }), ["s", "n"]);
   assert.deepEqual(getOpenings({ type: "corner", rotation: 0 }), ["n", "e"]);
   assert.deepEqual(getOpenings({ type: "cross", rotation: 3 }), ["w", "n", "e", "s"]);
+  assert.deepEqual(getOpenings({ type: "filter", rotation: 0 }), ["e", "w"]);
+  assert.deepEqual(getOpenings({ type: "reservoir", rotation: 0 }), ["e", "w"]);
 });
 
 test("flow direction respects straight and cross rules", () => {
   assert.equal(getNextDirection({ type: "straight", rotation: 0 }, "e"), "e");
   assert.equal(getNextDirection({ type: "straight", rotation: 1 }, "s"), "s");
   assert.equal(getNextDirection({ type: "cross", rotation: 0 }, "w"), "w");
+  assert.equal(getNextDirection({ type: "filter", rotation: 0 }, "e"), "e");
+  assert.equal(getNextDirection({ type: "reservoir", rotation: 0 }, "e"), "e");
 });
 
 test("random pieces stay within the supported piece and rotation ranges", () => {
@@ -167,4 +185,24 @@ test("validation rejects a route with a rotated first piece", () => {
     ),
   };
   assert.equal(validateLevel(brokenLevel), false);
+});
+
+test("DIFFICULTY_CONFIG defines easy, normal, and hard profiles", () => {
+  assert.ok(DIFFICULTY_CONFIG.easy);
+  assert.ok(DIFFICULTY_CONFIG.normal);
+  assert.ok(DIFFICULTY_CONFIG.hard);
+  assert.ok(DIFFICULTY_CONFIG.easy.countdownSeconds > DIFFICULTY_CONFIG.hard.countdownSeconds);
+  assert.ok(DIFFICULTY_CONFIG.easy.flowDelay > DIFFICULTY_CONFIG.hard.flowDelay);
+  assert.ok(DIFFICULTY_CONFIG.hard.discardPenalty > DIFFICULTY_CONFIG.easy.discardPenalty);
+});
+
+test("createLevel supports difficulty modes and scales constraints properly", () => {
+  const easyLevel = createLevel(77, 1, "easy");
+  const hardLevel = createLevel(77, 1, "hard");
+  assert.ok(validateLevel(easyLevel));
+  assert.ok(validateLevel(hardLevel));
+  assert.ok(easyLevel.timeLimit > hardLevel.timeLimit);
+  assert.ok(easyLevel.obstacles.length <= hardLevel.obstacles.length);
+  assert.equal(easyLevel.mode, "easy");
+  assert.equal(hardLevel.mode, "hard");
 });
