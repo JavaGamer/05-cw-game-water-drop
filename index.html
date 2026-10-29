@@ -8,6 +8,35 @@
   </head>
   <body>
     <main class="game-shell">
+      <!-- Floating Milestone Toast Notification -->
+      <aside
+        class="milestone-toast"
+        id="milestone-toast"
+        role="status"
+        aria-live="polite"
+        hidden
+      >
+        <div class="milestone-toast-icon" aria-hidden="true">★</div>
+        <div class="milestone-toast-body">
+          <div class="milestone-toast-header">
+            <span class="milestone-toast-kicker">Impact Milestone Reached!</span>
+            <span class="milestone-toast-badge" id="milestone-badge">💧 1 Person</span>
+          </div>
+          <h3 class="milestone-toast-title" id="milestone-title">First Drop</h3>
+          <p class="milestone-toast-copy" id="milestone-copy">
+            50 pts: You funded clean water for 1 person in need!
+          </p>
+        </div>
+        <button
+          class="milestone-close-btn"
+          id="milestone-close-btn"
+          type="button"
+          aria-label="Dismiss milestone"
+        >
+          ✕
+        </button>
+      </aside>
+
       <header class="topbar">
         <a
           class="brand"
@@ -238,6 +267,9 @@
           </div>
           <div class="breakdown-item">
             <span>Early valve bonus:</span> <strong id="bd-time">+0</strong>
+          </div>
+          <div class="breakdown-item milestone-breakdown" id="bd-milestone-wrap" hidden>
+            <span>Impact milestone:</span> <strong id="bd-milestone">—</strong>
           </div>
         </div>
 

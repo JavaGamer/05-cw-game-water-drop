@@ -2,6 +2,7 @@ import {
   DIRECTIONS as directions,
   DIFFICULTY_CONFIG,
   GAME_CONFIG,
+  MILESTONES,
   OPPOSITE as opposite,
   PIPE_TYPES as pipeTypes,
   createLevel,
@@ -47,6 +48,18 @@ const valveButton = document.getElementById("valve-btn");
 const startButton = document.getElementById("start-btn");
 const difficultyButtons = document.querySelectorAll(".diff-btn");
 const difficultyHint = document.getElementById("difficulty-hint");
+const milestoneToast = document.getElementById("milestone-toast");
+const milestoneBadge = document.getElementById("milestone-badge");
+const milestoneTitle = document.getElementById("milestone-title");
+const milestoneCopy = document.getElementById("milestone-copy");
+const milestoneCloseBtn = document.getElementById("milestone-close-btn");
+const bdMilestoneWrap = document.getElementById("bd-milestone-wrap");
+const bdMilestone = document.getElementById("bd-milestone");
+
+// Milestone Tracking State
+let reachedMilestones = new Set();
+let highestMilestoneAchieved = null;
+let milestoneToastTimer = null;
 
 // Difficulty State
 let currentDifficulty = localStorage.getItem("cw_game_difficulty") || "normal";
@@ -149,6 +162,37 @@ function updateDifficultyUI(mode) {
   if (discardButton) {
     discardButton.title = `Discard current piece (-${modeConfig.discardPenalty} pts)`;
     discardButton.innerHTML = `<span class="discard-icon">✕</span> Discard (-${modeConfig.discardPenalty})`;
+  }
+}
+
+/**
+ * Displays an animated milestone toast notification in the DOM.
+ */
+function displayMilestoneToast(milestone) {
+  if (!milestoneToast) return;
+  if (milestoneBadge) milestoneBadge.textContent = milestone.badge;
+  if (milestoneTitle) milestoneTitle.textContent = milestone.title;
+  if (milestoneCopy) milestoneCopy.textContent = milestone.message;
+  milestoneToast.hidden = false;
+
+  soundManager.playBonus();
+
+  clearTimeout(milestoneToastTimer);
+  milestoneToastTimer = setTimeout(() => {
+    milestoneToast.hidden = true;
+  }, 4200);
+}
+
+/**
+ * Evaluates current score against the MILESTONES array using conditionals.
+ */
+function checkScoreMilestones() {
+  for (const milestone of MILESTONES) {
+    if (score >= milestone.score && !reachedMilestones.has(milestone.score)) {
+      reachedMilestones.add(milestone.score);
+      highestMilestoneAchieved = milestone;
+      displayMilestoneToast(milestone);
+    }
   }
 }
 
@@ -410,6 +454,10 @@ function resetGame() {
   hasHeldThisTurn = false;
   hoveredCell = null;
   pendingLeakTarget = null;
+  reachedMilestones = new Set();
+  highestMilestoneAchieved = null;
+  clearTimeout(milestoneToastTimer);
+  if (milestoneToast) milestoneToast.hidden = true;
 
   timeLeft = level.timeLimit || countdownSeconds;
   gameState = "ready";
@@ -949,6 +997,13 @@ function finishGame(won) {
   document.getElementById("bd-special").textContent = `+${specialScore}`;
   document.getElementById("bd-time").textContent = `+${timeBonusScore}`;
 
+  if (highestMilestoneAchieved && bdMilestoneWrap && bdMilestone) {
+    bdMilestoneWrap.hidden = false;
+    bdMilestone.textContent = `${highestMilestoneAchieved.title} (${highestMilestoneAchieved.badge})`;
+  } else if (bdMilestoneWrap) {
+    bdMilestoneWrap.hidden = true;
+  }
+
   const isNewBest = score > highScore;
   if (isNewBest) {
     highScore = score;
@@ -978,6 +1033,7 @@ function updateStats() {
   bestScoreElement.textContent = String(highScore).padStart(3, "0");
   jerryCansCountElement.textContent = String(jerryCansCollected);
   timeElement.textContent = String(Math.max(0, timeLeft)).padStart(2, "0");
+  checkScoreMilestones();
 }
 
 // Event Listeners
@@ -1043,6 +1099,13 @@ document.addEventListener("keydown", (event) => {
     valveButton.click();
   }
 });
+
+if (milestoneCloseBtn) {
+  milestoneCloseBtn.addEventListener("click", () => {
+    milestoneToast.hidden = true;
+    clearTimeout(milestoneToastTimer);
+  });
+}
 
 // Difficulty selector controls
 difficultyButtons.forEach((btn) => {

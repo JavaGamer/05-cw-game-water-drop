@@ -36,6 +36,7 @@ Your chosen mode automatically persists in `localStorage` across rounds and sess
 - **Typography**: Adheres to charity: water brand guidelines by prioritizing `Proxima Nova`, `Avenir`, and `Manrope`, accompanied by `DM Mono` for figures and counters.
 - **Campaign Links**: Branded campaign footer with direct links to [charity: water's official website](https://www.charitywater.org) and [donation portal](https://www.charitywater.org/donate).
 - **Interactive DOM Feedback**: Live DOM interaction including Jerry Can collectible removal with pop animation, dynamic pipe placement & rotation in the SVG grid, queue shifts, and floating score feedback popups.
+- **Community Impact Milestones**: Real-time milestone toasts and end-game breakdown tracking real-world clean water impact at key score thresholds (50, 100, 175, 250, 350 pts).
 
 - `index.html`: Semantic game shell, stats panel, hold card, and result breakdown modal.
 - `styles.css`: Responsive charity: water visual system with SVG pipe styling, animated water glow, red filling leak countdown border, and board-top controls.

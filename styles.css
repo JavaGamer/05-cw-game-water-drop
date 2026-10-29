@@ -943,6 +943,121 @@ h2 {
 .footer-link-pill:hover .external-arrow {
   transform: translate(2px, -2px);
 }
+/* Milestone Toast Notification */
+.milestone-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: min(520px, calc(100vw - 32px));
+  width: 100%;
+  padding: 14px 18px;
+  background: #ffffff;
+  color: var(--ink);
+  border-left: 5px solid var(--yellow);
+  border-radius: 6px;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.15),
+    0 4px 10px -2px rgba(0, 0, 0, 0.08),
+    0 0 0 1px var(--line);
+  z-index: 1000;
+  animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.milestone-toast[hidden] {
+  display: none;
+}
+@keyframes toastSlideIn {
+  from {
+    transform: translate(-50%, -24px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+.milestone-toast-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--yellow);
+  color: var(--ink);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(255, 201, 7, 0.4);
+}
+.milestone-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+.milestone-toast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.milestone-toast-kicker {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9c7200;
+}
+.milestone-toast-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(255, 201, 7, 0.2);
+  border: 1px solid rgba(255, 201, 7, 0.6);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: #7a5800;
+}
+.milestone-toast-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+  color: var(--ink);
+}
+.milestone-toast-copy {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.milestone-close-btn {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.milestone-close-btn:hover {
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.05);
+}
+.breakdown-item.milestone-breakdown {
+  border-top: 1px dashed var(--line);
+  margin-top: 4px;
+  padding-top: 6px;
+}
+.breakdown-item.milestone-breakdown strong {
+  color: #8f6700;
+  font-weight: 700;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;

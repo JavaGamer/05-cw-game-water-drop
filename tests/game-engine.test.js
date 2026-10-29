@@ -4,6 +4,7 @@ import {
   DIRECTIONS,
   DIFFICULTY_CONFIG,
   GAME_CONFIG,
+  MILESTONES,
   OPPOSITE,
   PIPE_TYPES,
   addDifficultyPieces,
@@ -205,4 +206,18 @@ test("createLevel supports difficulty modes and scales constraints properly", ()
   assert.ok(easyLevel.obstacles.length <= hardLevel.obstacles.length);
   assert.equal(easyLevel.mode, "easy");
   assert.equal(hardLevel.mode, "hard");
+});
+
+test("MILESTONES array defines ascending score thresholds and impact messages", () => {
+  assert.ok(Array.isArray(MILESTONES));
+  assert.ok(MILESTONES.length >= 5);
+  for (let i = 0; i < MILESTONES.length; i += 1) {
+    const m = MILESTONES[i];
+    assert.ok(typeof m.score === "number" && m.score > 0);
+    assert.ok(typeof m.title === "string" && m.title.length > 0);
+    assert.ok(typeof m.message === "string" && m.message.length > 0);
+    if (i > 0) {
+      assert.ok(m.score > MILESTONES[i - 1].score);
+    }
+  }
 });

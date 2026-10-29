@@ -44,6 +44,39 @@ export const DIFFICULTY_CONFIG = Object.freeze({
   }),
 });
 
+export const MILESTONES = Object.freeze([
+  Object.freeze({
+    score: 50,
+    title: "First Drop",
+    badge: "💧 1 Person",
+    message: "50 pts: You funded clean water for 1 person in need!",
+  }),
+  Object.freeze({
+    score: 100,
+    title: "Clean Flow",
+    badge: "🏡 1 Family",
+    message: "100 pts: A family now enjoys daily safe drinking water!",
+  }),
+  Object.freeze({
+    score: 175,
+    title: "Village Well",
+    badge: "🏥 Clinic Connected",
+    message: "175 pts: Piped water safely reaches a community health post!",
+  }),
+  Object.freeze({
+    score: 250,
+    title: "Water Champion",
+    badge: "🏫 School Point",
+    message: "250 pts: A rural school gets handwashing & sanitation stations!",
+  }),
+  Object.freeze({
+    score: 350,
+    title: "Transformational Impact",
+    badge: "🌍 Safe Community",
+    message: "350 pts: An entire community celebrates sustainable clean water!",
+  }),
+]);
+
 export const DIRECTIONS = Object.freeze({
   n: Object.freeze({ row: -1, col: 0 }),
   e: Object.freeze({ row: 0, col: 1 }),

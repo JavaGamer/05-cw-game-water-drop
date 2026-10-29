@@ -53,6 +53,7 @@
         DIRECTIONS,
         DIFFICULTY_CONFIG,
         GAME_CONFIG,
+        MILESTONES,
         OPPOSITE,
         PIPE_TYPES,
         addDifficultyPieces,
@@ -192,6 +193,21 @@
         assert(easyLevel.obstacles.length <= hardLevel.obstacles.length, "Easy level should have fewer or equal obstacles");
         assertEqual(easyLevel.mode, "easy");
         assertEqual(hardLevel.mode, "hard");
+      });
+
+      // 9. charity: water Milestones Array
+      runTest("MILESTONES array defines ascending score thresholds and impact messages", () => {
+        assert(Array.isArray(MILESTONES), "MILESTONES should be an array");
+        assert(MILESTONES.length >= 5, "MILESTONES should define at least 5 milestones");
+        for (let i = 0; i < MILESTONES.length; i += 1) {
+          const m = MILESTONES[i];
+          assert(typeof m.score === "number" && m.score > 0, `Milestone ${i} must have positive score`);
+          assert(typeof m.title === "string" && m.title.length > 0, `Milestone ${i} must have title`);
+          assert(typeof m.message === "string" && m.message.length > 0, `Milestone ${i} must have message`);
+          if (i > 0) {
+            assert(m.score > MILESTONES[i - 1].score, `Milestone scores must strictly increase: ${m.score} vs ${MILESTONES[i-1].score}`);
+          }
+        }
       });
 
       summary.textContent = `Completed: ${passed} passed, ${failed} failed.`;
